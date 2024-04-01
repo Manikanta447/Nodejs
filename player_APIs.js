@@ -15,7 +15,7 @@ const initializeDbAndServer = async () => {
       driver: sqlite3.Database,
     })
     app.listen(3000, () => {
-      console.log('server started')
+      //console.log('server started')
     })
   } catch (e) {
     console.log(e.message)
@@ -24,21 +24,32 @@ const initializeDbAndServer = async () => {
 }
 initializeDbAndServer()
 
+const convertsnake_caseToCamelCase = dbObject => {
+  return {
+    playerId: dbObject.player_id,
+    playerName: dbObject.player_name,
+    jerseyNumber: dbObject.jersey_number,
+    role: dbObject.role,
+  }
+}
+
 app.get('/players/', async (request, response) => {
-  console.log('entered')
-  const getPlayerQuery = `
+  //console.log('entered')
+  let getPlayerQuery = `
   SELECT
      * 
   FROM 
     cricket_team;`
-  const playersList = await db.all(getPlayerQuery)
-  response.send(playersList)
+  getPlayerQuery = await db.all(getPlayerQuery)
+  const newPlayersList = getPlayerQuery.map(convertsnake_caseToCamelCase)
+
+  response.send(newPlayersList)
 })
 
 app.post('/players/', async (request, response) => {
   const newPlayerDetails = request.body
   const {playerName, jerseyNumber, role} = newPlayerDetails
-  const playerPostQuery = `
+  let playerPostQuery = `
     INSERT INTO 
       cricket_team (player_name,jersey_number,role)
     VALUES
@@ -48,34 +59,36 @@ app.post('/players/', async (request, response) => {
         "${role}"
       );
   `
-  let responsedb = await db.run(playerPostQuery)
-  console.log(responsedb.lastID)
+  playerPostQuery = await db.run(playerPostQuery)
+  //console.log(playerPostQuery.lastID);
   response.send('Player Added to Team')
 })
 
 app.get('/players/:playerId/', async (request, response) => {
   const {playerId} = request.params
-  const getPlayerQuery = `
+  let getPlayerQuery = `
     SELECT *
     FROM cricket_team
     WHERE 
       player_id = ${playerId};
   `
-  const playerDetails = await db.get(getPlayerQuery)
-  response.send(playerDetails)
+  getPlayerQuery = await db.get(getPlayerQuery)
+  const newPlayerDetails = convertsnake_caseToCamelCase(getPlayerQuery)
+  response.send(newPlayerDetails)
 })
 
-app.put('/players/:playerId/', async (request, response) => { //ERROR IN THIS API NEED TO RESOLVE 
+app.put('/players/:playerId/', async (request, response) => {
   const {playerId} = request.params
+  //console.log(playerId)
   const newPlayerDetails = request.body
   const {playerName, jerseyNumber, role} = newPlayerDetails
-  console.log(playerName)
+  //console.log(playerName)
   const updatePlayerQuery = `
     UPDATE cricket_team
     SET 
-      player_name = ${playerName},
+      player_name = "${playerName}",
       jersey_number = ${jerseyNumber},
-      role = ${role} 
+      role = "${role}" 
     WHERE 
       player_id = ${playerId};
   `
@@ -94,4 +107,4 @@ app.delete('/players/:playerId', async function (request, response) {
   response.send('Player Removed')
 })
 
-module.exports = app;
+module.exports = app
