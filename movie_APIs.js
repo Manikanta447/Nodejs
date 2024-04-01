@@ -97,3 +97,53 @@ app.put('/movies/:movieId/', async (request, response) => {
   await db.run(updateMovie)
   response.send('Movie Details Updated')
 })
+
+//DELETE MOVIE
+
+app.delete('/movies/:movieId/', async (request, response) => {
+  const {movieId} = request.params
+  let deleteMovie = `
+    DELETE FROM 
+      movie
+    WHERE 
+      movie_id = ${movieId};
+  `
+  await db.run(deleteMovie)
+  response.send('Movie Removed')
+})
+
+//GET DIRECTORS DETAILS
+app.get('/directors/', async (request, response) => {
+  let directorDetails = `
+  SELECT 
+    director_id,
+    director_name
+  FROM 
+    director
+  `
+  directorDetails = await db.all(directorDetails)
+  const result = directorDetails.map(obj => ({
+    directorName: obj.director_name,
+    directorId: obj.director_id,
+  }))
+  response.send(result)
+})
+
+//get Director MOvies
+app.get('/directors/:directorId/movies', async (request, response) => {
+  const {directorId} = request.params
+  let getDirectorMovies = `
+    SELECT 
+      movie_name
+    FROM 
+      movie
+    WHERE 
+      director_id = ${directorId};
+  `
+  getDirectorMovies = await db.all(getDirectorMovies)
+  const movies = getDirectorMovies.map(obj => ({movieName: obj.movie_name}))
+  response.send(movies)
+})
+
+
+module.exports = app;
