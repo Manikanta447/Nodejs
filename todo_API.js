@@ -232,19 +232,20 @@ app.get('/agenda/', async (request, response) => {
   const {date} = request.query
   const newDate = dateFns.format(new Date(date), 'yyyy-MM-dd')
   console.log(date)
-  console.log(newDate)
-  let getByDate = `
-      SELECT * FROM todo WHERE due_date = "${newDate}"
-  `
 
-  if (checkDueDate(date) === false) {
-    response.status(400)
-    response.send('Invalid Due Date')
-  } else {
+  console.log(dateFns.isValid(new Date(newDate)))
+
+  if (dateFns.isValid(new Date(date))) {
+    let getByDate = `
+      SELECT * FROM todo WHERE due_date = "${newDate}"
+    `
     getByDate = await db.all(getByDate)
-    //console.log(getByDate)
     const dateResults = getByDate.map(obj => convertResults(obj))
     response.send(dateResults)
+  } else {
+    response.status(400)
+    response.send('Invalid Due Date')
+    console.log('y')
   }
 })
 
@@ -261,7 +262,7 @@ app.post('/todos/', async (request, response) => {
   } else if (checkCategory(category) === false) {
     response.status(400)
     response.send('Invalid Todo Category')
-  } else if (checkDueDate(dueDate) === false) {
+  } else if (!dateFns.isValid(new Date(dueDate))) {
     response.status(400)
     response.send('Invalid Due Date')
   } else {
@@ -373,7 +374,7 @@ app.put('/todos/:todoId/', async (request, response) => {
         id: todoId,
       }
 
-      if (checkDueDate(dueDate) === false) {
+      if (!dateFns.isValid(new Date(dueDate))) {
         response.status(400)
         response.send('Invalid Due Date')
         break
@@ -386,14 +387,6 @@ app.put('/todos/:todoId/', async (request, response) => {
   }
 })
 
-/**let putStatus = `
-        UPDATE todo
-        SET 
-          status = "${status}"
-        WHERE 
-          id = ${todoId}
-      `
-      await db.run(putStatus)**/
 
 //DELETE API
 app.delete('/todos/:todoId/', async (request, response) => {
